@@ -15,6 +15,8 @@ static int my_proc_init(void)
 
 	/* TODO: print current process pid and its name */
 	pr_info("The pid of the current process %s is %u.\n", task->comm, task->pid);
+	printk("[virtual memory areas of the current process]\nstart : 0x%lx\nend : 0x%lx\n",task->mm->mmap->vm_start,task->mm->mmap->vm_end);
+	//printk("[virtual memory areas of the current process]\nstart : 0x%lx\nend : 0x%lx\n",task->active_mm->mmap->vm_start,task->active_mm->mmap->vm_end);
 
 	/* TODO: print the pid and name of all processes */
 	printk("[Process list]\nPID\t\tNAME\n");
