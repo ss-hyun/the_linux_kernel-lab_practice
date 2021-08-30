@@ -6,9 +6,12 @@ MODULE_DESCRIPTION("Simple module");
 MODULE_AUTHOR("Kernel Hacker");
 MODULE_LICENSE("GPL");
 
+#define KERN_N_DISPLAY KERN_SOH "7"
+
 static int my_hello_init(void)
 {
 	pr_debug("Hello!\n");
+	printk(KERN_N_DISPLAY "The log level of this message is %s\n", KERN_N_DISPLAY);
 	return 0;
 }
 
