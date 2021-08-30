@@ -12,6 +12,7 @@ static int my_hello_init(void)
 {
 	pr_debug("Hello!\n");
 	printk(KERN_N_DISPLAY "The log level of this message is %s\n", KERN_N_DISPLAY);
+	printk(KERN_DEBUG "Function name is %s\n", __FUNCTION__);
 	return 0;
 }
 
