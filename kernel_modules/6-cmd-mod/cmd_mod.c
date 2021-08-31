@@ -19,6 +19,7 @@ static int __init cmd_init(void)
 
 static void __exit cmd_exit(void)
 {
+	pr_info("str : %s\n",str);
 	pr_info("Exit, stage left\n");
 }
 
