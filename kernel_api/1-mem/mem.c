@@ -19,20 +19,21 @@ static char *mem;
 static int mem_init(void)
 {
 	size_t i;
-
+	
 	mem = kmalloc(4096 * sizeof(*mem), GFP_KERNEL);
 	if (mem == NULL)
 		goto err_mem;
-
-	pr_info(KERN_ALERT "chars: ");
+	
+	pr_info("chars: ");
 	for (i = 0; i < 4096; i++) {
 		if (isalpha(mem[i]))
-			continue;//printk(KERN_CONT "%c%u ", mem[i], i);
-		else
-			printk(KERN_CONT "%u ",i);
+			printk(KERN_CONT "%c%u ", mem[i], i);
+		else{
+			printk(KERN_CONT "\n");
+			printk("%c%u\n", mem[i], i);
+		}
 	}
-	pr_info("\n");
-
+	
 	return 0;
 
 err_mem:
