@@ -42,6 +42,8 @@ static void task_info_add_to_list(int pid)
 	struct task_info *ti;
 
 	/* TODO 1: Allocate task_info and add it to list */
+	ti = task_info_alloc(pid);
+	list_add(&ti->list, &head);
 }
 
 static void task_info_add_for_current(void)
@@ -61,9 +63,9 @@ static void task_info_print_list(const char *msg)
 	pr_info("%s: [ ", msg);
 	list_for_each(p, &head) {
 		ti = list_entry(p, struct task_info, list);
-		pr_info("(%d, %lu) ", ti->pid, ti->timestamp);
+		pr_info(KERN_CONT "(%d, %lu) ", ti->pid, ti->timestamp);
 	}
-	pr_info("]\n");
+	pr_info(KERN_CONT "]\n");
 }
 
 static void task_info_purge_list(void)
@@ -72,6 +74,13 @@ static void task_info_purge_list(void)
 	struct task_info *ti;
 
 	/* TODO 2: Iterate over the list and delete all elements */
+	list_for_each_safe(p, q, &head){
+		ti = list_entry(p, struct task_info, list);
+		list_del(p);
+		kfree(ti);
+	}
+
+	task_info_print_list("After deleting all the nodes");
 }
 
 static int list_init(void)
