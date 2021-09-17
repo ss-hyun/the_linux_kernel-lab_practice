@@ -15,3 +15,4 @@ obj-m += ./kernel_api/1-mem/
 obj-m += ./kernel_api/3-memory/
 obj-m += ./kernel_api/5-list-full/
 obj-m += ./kernel_api/2-sched-spin/
+obj-m += ./kernel_api/temp/
