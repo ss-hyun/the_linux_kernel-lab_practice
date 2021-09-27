@@ -13,12 +13,20 @@ MODULE_LICENSE("GPL");
 extern void task_info_add_for_current(void);
 extern void task_info_remove_expired(void);
 extern void task_info_print_list(const char *msg);
+// extern void task_info_print_list_rev(const char *msg);
+// extern void task_info_add_to_list(int pid);
 
 static int list_test_init(void)
 {
+	// int i;
 	/* TODO 1: Uncomment after exporting the symbols in 6-list-sync. */
-	// task_info_add_for_current();
-	// task_info_print_list("after new addition");
+	task_info_add_for_current();
+	// for(i=2;i<100;i++){
+	// 	if(i%10==3)
+	// 		task_info_add_to_list(i);
+	// }
+	task_info_print_list("after new addition");
+	// task_info_print_list_rev("after new addition - print reverse");
 
 	return 0;
 }
@@ -26,8 +34,8 @@ static int list_test_init(void)
 static void list_test_exit(void)
 {
 	/* TODO 1: Uncomment after exporting the symbols in 6-list-sync. */
-	// task_info_remove_expired();
-	// task_info_print_list("after removing expired");
+	task_info_remove_expired();
+	task_info_print_list("after removing expired");
 }
 
 module_init(list_test_init);

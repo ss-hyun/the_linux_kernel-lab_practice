@@ -7,7 +7,9 @@ MODULE_DESCRIPTION("Test module");
 MODULE_AUTHOR("SO2");
 MODULE_LICENSE("GPL");
 
-int c, d;
+// int c, d;
+// extern void task_info_add_to_list(int pid);
+// extern void task_info_print_list(const char *msg);
 
 /*
   error list : memory 쓰기 오류 추정 (잘못된 접근)
@@ -25,7 +27,17 @@ static int test_init(void)
 	int a, b, *add, *add2, size, i;
 	char *t;
 
-	
+	/*
+	 module 6에서 task_info 노드 추가 시에 delay를 주면,
+	 아래 코드를 사용하고 module 7과 이 test module을 동시에 loading할 때
+	 race condition이 발생하는 것을 확인할 수 있다.
+	*/
+	// for(i=2;i<100;i++){
+	// 	if(i%10==4)
+	// 		task_info_add_to_list(i);
+	// }
+
+	/*
 	add = &a;
 	*add = 1;
 	*(add - 1) = 2;
@@ -73,16 +85,16 @@ static int test_init(void)
 	printk("after kfree t addr : 0x%px\n", t);
 	printk("t[9] addr : 0x%px\n", t+9);
 	// t[i-1] = NULL; // t[9]
-	/* upper line : error
-	Slab corruption (Tainted: G           O     ): kmalloc-32 start=c4574820, len=32
-	000: 6b 6b 6b 6b 6b 6b 6b 6b 6b 00 6b 6b 6b 6b 6b 6b  kkkkkkkkk.kkkkkk
-	Prev obj: start=c4574800, len=32
-	000: 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b  kkkkkkkkkkkkkkkk
-	010: 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b a5  kkkkkkkkkkkkkkk.
-	Next obj: start=c4574840, len=32
-	000: 2e 6e 6f 74 65 2e 4c 69 6e 75 78 00 5a 5a 5a 5a  .note.Linux.ZZZZ
-	010: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a a5  ZZZZZZZZZZZZZZZ.
-	*/
+	// upper line : error
+	// Slab corruption (Tainted: G           O     ): kmalloc-32 start=c4574820, len=32
+	// 000: 6b 6b 6b 6b 6b 6b 6b 6b 6b 00 6b 6b 6b 6b 6b 6b  kkkkkkkkk.kkkkkk
+	// Prev obj: start=c4574800, len=32
+	// 000: 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b  kkkkkkkkkkkkkkkk
+	// 010: 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b a5  kkkkkkkkkkkkkkk.
+	// Next obj: start=c4574840, len=32
+	// 000: 2e 6e 6f 74 65 2e 4c 69 6e 75 78 00 5a 5a 5a 5a  .note.Linux.ZZZZ
+	// 010: 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a 5a a5  ZZZZZZZZZZZZZZZ.
+	
 	printk("read string : %s\n", t);
 	printk("read int : %d\n", t);
 	printk("read char : t - %c, t[0] - %c\n", t, t[0]);
@@ -91,6 +103,7 @@ static int test_init(void)
 		printk(KERN_CONT "%c ",t[i]);
 	}
 	printk(KERN_CONT "\n");
+	*/
 	
 	return 0;
 }
