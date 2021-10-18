@@ -16,5 +16,6 @@ obj-m += ./kernel_api/1-mem/
 obj-m += ./kernel_api/3-memory/
 obj-m += ./kernel_api/5-list-full/
 obj-m += ./kernel_api/2-sched-spin/
+obj-m += ./interrupts/
 obj-m += ./device_drivers/kernel/
 obj-m += ./device_drivers/extra/char-driver-lin/
