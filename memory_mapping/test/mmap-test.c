@@ -143,7 +143,7 @@ int main(int argc, const char **argv)
 		assert(system("rm " MMAP_DEV) == 0);
 		exit(EXIT_FAILURE);
 	}
-
+	
 	if (test >= 3) {
 		usage_before_mmap = show_mem_usage();
 		if (usage_before_mmap < 0)
@@ -164,7 +164,7 @@ int main(int argc, const char **argv)
 
 		munmap(addr, SIZE);
 	}
-
+	
 	close(fd);
 
 	assert(system("rm " MMAP_DEV) == 0);

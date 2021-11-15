@@ -51,8 +51,12 @@ static ssize_t my_read(struct file *file, char __user *user_buffer,
 		size_t size, loff_t *offset)
 {
 	/* TODO 2: check size doesn't exceed our mapped area size */
+	if (size > NPAGES * PAGE_SIZE)
+		size = NPAGES * PAGE_SIZE;
 
 	/* TODO 2: copy from mapped area to user buffer */
+	if (copy_to_user(user_buffer, vmalloc_area, size))
+    	return -EFAULT;	
 
 	return size;
 }
@@ -61,25 +65,38 @@ static ssize_t my_write(struct file *file, const char __user *user_buffer,
 		size_t size, loff_t *offset)
 {
 	/* TODO 2: check size doesn't exceed our mapped area size */
+	if (size > NPAGES * PAGE_SIZE)
+		size = NPAGES * PAGE_SIZE;
 
 	/* TODO 2: copy from user buffer to mapped area */
-
+	if (copy_from_user(vmalloc_area, user_buffer, size))
+		return -EFAULT;
+	
 	return size;
 }
 
 static int my_mmap(struct file *filp, struct vm_area_struct *vma)
 {
-	int ret;
+	int ret ,i;
 	long length = vma->vm_end - vma->vm_start;
-	unsigned long start = vma->vm_start;
+	unsigned long end = vma->vm_end;
 	char *vmalloc_area_ptr = vmalloc_area;
 	unsigned long pfn;
 
 	if (length > NPAGES * PAGE_SIZE)
 		return -EIO;
-
+	
 	/* TODO 1: map pages individually */
-
+	while (length) {
+		ret = remap_pfn_range(vma, end - length, vmalloc_to_pfn((void *)vmalloc_area_ptr), 
+								PAGE_SIZE, vma->vm_page_prot);	
+		if (ret < 0) {
+			pr_err("[my_mmap] could not map the address area.\n");
+			return -EIO;
+		}
+		vmalloc_area_ptr += PAGE_SIZE;
+		length -= PAGE_SIZE;
+	}
 	return 0;
 }
 
@@ -92,26 +109,61 @@ static const struct file_operations mmap_fops = {
 	.write = my_write
 };
 
+static char* vma_name(struct vm_area_struct *vma_iter)
+{
+	if (vma_iter->vm_ops && vma_iter->vm_file)
+		return vma_iter->vm_file->f_path.dentry->d_name.name;
+	
+	if (vma_iter->vm_flags & vma_iter->vm_mm->stack_vm & VM_GROWSUP)
+		return "[ stack ]";
+	
+	if (vma_iter->vm_mm->start_brk <= vma_iter->vm_start && vma_iter->vm_mm->brk >= vma_iter->vm_end)
+		return "[ heap ]";
+	
+	if (vma_iter->vm_end >= vma_iter->vm_mm->start_stack && vma_iter->vm_mm->start_stack >= vma_iter->vm_start){
+		return "[ stack ]";
+	}
+
+	return "[ anon ]";
+}
+
 static int my_seq_show(struct seq_file *seq, void *v)
 {
 	struct mm_struct *mm;
 	struct vm_area_struct *vma_iterator;
-	unsigned long total = 0;
+	unsigned long total = 0, size;
 
 	/* TODO 3: Get current process' mm_struct */
+	mm = get_task_mm(current);
 
 	/* TODO 3: Iterate through all memory mappings and print ranges */
+	pr_info("[vm_start:vm_end]\tsize\tmode\tmapping\n");
+	for (vma_iterator = mm->mmap; vma_iterator != NULL; vma_iterator = vma_iterator->vm_next) {
+		total += size = vma_iterator->vm_end - vma_iterator->vm_start;
+		pr_info("[%08lx:%08lx]\t%luK\t%c%c%c%c\t%s\n",
+				 vma_iterator->vm_start, vma_iterator->vm_end,
+				 size >> 10, 
+				 vma_iterator->vm_flags&VM_READ?'r':'-', 
+				 vma_iterator->vm_flags&VM_WRITE?'w':'-',
+				 vma_iterator->vm_flags&VM_EXEC?'x':'-',
+				 vma_iterator->vm_flags&VM_SHARED?'s':'-',
+				 vma_name(vma_iterator));
+	}
+	pr_info("total\t%luK\t%s\n", total >> 10, current->comm);
 
 	/* TODO 3: Release mm_struct */
+	atomic_dec(&mm->mm_users);
 
 	/* TODO 3: write the total count to file  */
+	seq_printf(seq, "%ul", total);
+
 	return 0;
 }
 
 static int my_seq_open(struct inode *inode, struct file *file)
 {
 	/* TODO 3: Register the display function */
-	return 0;
+	return single_open(file, my_seq_show, NULL);
 }
 
 static const struct proc_ops my_proc_ops = {
@@ -126,6 +178,10 @@ static int __init my_init(void)
 	int ret = 0;
 	int i;
 	/* TODO 3: create a new entry in procfs */
+	if (!proc_create(PROC_ENTRY_NAME, 0, NULL, &my_proc_ops)) {
+		ret = -ENOMEM;
+		goto out;
+	}
 
 	ret = register_chrdev_region(MKDEV(MY_MAJOR, 0), 1, "mymap");
 	if (ret < 0) {
@@ -134,10 +190,25 @@ static int __init my_init(void)
 	}
 
 	/* TODO 1: allocate NPAGES using vmalloc */
+	vmalloc_area = vmalloc(NPAGES * PAGE_SIZE);
+	if (vmalloc_area == NULL) {
+		ret = -ENOMEM;
+		pr_err("[my_init] memory allocation failed.\n");
+		goto out_unreg;
+	}
 
 	/* TODO 1: mark pages as reserved */
+	for (i = 0; i < NPAGES * PAGE_SIZE; i += PAGE_SIZE){
+		SetPageReserved(vmalloc_to_page((unsigned long)vmalloc_area + i));
+	}
 
 	/* TODO 1: write data in each page */
+	for (i = 0; i < NPAGES * PAGE_SIZE; i += PAGE_SIZE) {
+		vmalloc_area[i] = 0xaa;
+		vmalloc_area[i + 1] = 0xbb;
+		vmalloc_area[i + 2] = 0xcc;
+		vmalloc_area[i + 3] = 0xdd;
+	}
 
 	cdev_init(&mmap_cdev, &mmap_fops);
 	ret = cdev_add(&mmap_cdev, MKDEV(MY_MAJOR, 0), 1);
@@ -165,9 +236,13 @@ static void __exit my_exit(void)
 	cdev_del(&mmap_cdev);
 
 	/* TODO 1: clear reservation on pages and free mem.*/
+	for (i = 0; i < NPAGES * PAGE_SIZE; i += PAGE_SIZE)
+		ClearPageReserved(vmalloc_to_page((unsigned long)vmalloc_area + i));
+	vfree(vmalloc_area);
 
 	unregister_chrdev_region(MKDEV(MY_MAJOR, 0), 1);
 	/* TODO 3: remove proc entry */
+	remove_proc_entry(PROC_ENTRY_NAME, NULL);
 }
 
 module_init(my_init);
