@@ -113,10 +113,7 @@ static char* vma_name(struct vm_area_struct *vma_iter)
 {
 	if (vma_iter->vm_ops && vma_iter->vm_file)
 		return vma_iter->vm_file->f_path.dentry->d_name.name;
-	
-	if (vma_iter->vm_flags & vma_iter->vm_mm->stack_vm & VM_GROWSUP)
-		return "[ stack ]";
-	
+		
 	if (vma_iter->vm_mm->start_brk <= vma_iter->vm_start && vma_iter->vm_mm->brk >= vma_iter->vm_end)
 		return "[ heap ]";
 	
@@ -155,7 +152,7 @@ static int my_seq_show(struct seq_file *seq, void *v)
 	atomic_dec(&mm->mm_users);
 
 	/* TODO 3: write the total count to file  */
-	seq_printf(seq, "%ul", total);
+	seq_printf(seq, "%lu", total);
 
 	return 0;
 }
